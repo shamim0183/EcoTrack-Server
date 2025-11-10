@@ -11,8 +11,10 @@ app.use(express.json())
 
 // Routes
 const challengeRoutes = require("./routes/challenges")
+const tipRoutes = require("./routes/tips")
 
 app.use("/api/challenges", challengeRoutes)
+app.use("/api/tips", tipRoutes)
 
 connectDB()
 
