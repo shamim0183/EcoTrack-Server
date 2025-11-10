@@ -9,7 +9,10 @@ const port = process.env.PORT || 3000
 app.use(cors())
 app.use(express.json())
 
+// Routes
+const challengeRoutes = require("./routes/challenges")
 
+app.use("/api/challenges", challengeRoutes)
 
 connectDB()
 
