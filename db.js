@@ -1,4 +1,3 @@
-// db.js
 require("dotenv").config()
 const { MongoClient, ServerApiVersion } = require("mongodb")
 
@@ -15,14 +14,16 @@ let db
 async function connectDB() {
   try {
     await client.connect()
-    db = client.db("ecotrack")
-    console.log("MongoDB connected")
+    db = client.db("ecotrack") // ✅ your database name
+    console.log("✅ MongoDB connected")
   } catch (err) {
-    console.error("MongoDB error:", err)
+    console.error("❌ MongoDB error:", err)
+    throw err
   }
 }
 
 function getDB() {
+  if (!db) throw new Error("❌ DB not initialized")
   return db
 }
 

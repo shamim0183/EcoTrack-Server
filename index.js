@@ -17,12 +17,14 @@ const eventRoutes = require("./routes/events")
 const dashboardRoutes = require("./routes/dashboard")
 const userRoutes = require("./routes/user")
 const userChallengeRoutes = require("./routes/userChallenges")
+const homeRoutes = require("./routes/homeRoutes")
 
 // Public
 app.use("/api/challenges", challengeRoutes)
 app.use("/api/tips", tipRoutes)
 app.use("/api/events", eventRoutes)
 app.use("/api/users", userRoutes)
+app.use("/api", homeRoutes)
 
 // Protected
 app.use("/api/dashboard", verifyFirebaseToken, dashboardRoutes)
@@ -39,5 +41,5 @@ connectDB()
     })
   })
   .catch((err) => {
-    console.error("Failed to connect to DB:", err)
+    console.error("❌ Failed to connect to DB:", err)
   })
