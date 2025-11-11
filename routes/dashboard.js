@@ -1,22 +1,40 @@
 const express = require("express")
 const router = express.Router()
+const { ObjectId } = require("mongodb")
 const { getDB } = require("../db")
 
 router.get("/", async (req, res) => {
   const db = getDB()
   const userEmail = req.query.userEmail
 
-  if (!db) {
-    return res.status(500).json({ message: "Database not initialized" })
+  if (!userEmail) {
+    return res.status(400).json({ message: "Missing userEmail" })
   }
 
   try {
-    const [challenges, tips, events] = await Promise.all([
-      db
-        .collection("challenges")
-        .find({ participants: userEmail })
-        .sort({ createdAt: -1 })
-        .toArray(),
+    const userChallenges = await db
+      .collection("userChallenges")
+      .find({ userId: userEmail })
+      .toArray()
+
+    const challengeIds = userChallenges.map((uc) => uc.challengeId)
+
+    const challenges = await db
+      .collection("challenges")
+      .find({ _id: { $in: challengeIds } })
+      .toArray()
+
+    const enrichedChallenges = userChallenges.map((uc) => {
+      const challenge = challenges.find(
+        (c) => c._id.toString() === uc.challengeId.toString()
+      )
+      return {
+        ...uc,
+        challenge,
+      }
+    })
+
+    const [tips, events] = await Promise.all([
       db
         .collection("tips")
         .find({ likes: userEmail })
@@ -29,10 +47,11 @@ router.get("/", async (req, res) => {
         .toArray(),
     ])
 
-    res.json({ challenges, tips, events })
+    res.json({ challenges: enrichedChallenges, tips, events })
   } catch (err) {
-    console.error("Filtered dashboard error:", err)
+    console.error("Dashboard error:", err)
     res.status(500).json({ message: "Failed to load personalized dashboard" })
   }
 })
+
 module.exports = router

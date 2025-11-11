@@ -15,12 +15,15 @@ const tipRoutes = require("./routes/tips")
 const eventRoutes = require("./routes/events")
 const dashboardRoutes = require("./routes/dashboard")
 const userRoutes = require("./routes/user")
+const userChallengeRoutes = require("./routes/userChallenges")
 
 app.use("/api/challenges", challengeRoutes)
 app.use("/api/tips", tipRoutes)
 app.use("/api/events", eventRoutes)
 app.use("/api/dashboard", dashboardRoutes)
 app.use("/api/users", userRoutes)
+app.use("/api/user-challenges", userChallengeRoutes)
+
 
 
 app.get("/", (req, res) => {
