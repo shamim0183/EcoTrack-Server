@@ -2,6 +2,7 @@ require("dotenv").config()
 const express = require("express")
 const cors = require("cors")
 const { connectDB } = require("./db")
+const { verifyFirebaseToken } = require("./firebaseAuth")
 
 const app = express()
 const port = process.env.PORT || 3000
@@ -17,14 +18,15 @@ const dashboardRoutes = require("./routes/dashboard")
 const userRoutes = require("./routes/user")
 const userChallengeRoutes = require("./routes/userChallenges")
 
+// Public
 app.use("/api/challenges", challengeRoutes)
 app.use("/api/tips", tipRoutes)
 app.use("/api/events", eventRoutes)
-app.use("/api/dashboard", dashboardRoutes)
 app.use("/api/users", userRoutes)
-app.use("/api/user-challenges", userChallengeRoutes)
 
-
+// Protected
+app.use("/api/dashboard", verifyFirebaseToken, dashboardRoutes)
+app.use("/api/user-challenges", verifyFirebaseToken, userChallengeRoutes)
 
 app.get("/", (req, res) => {
   res.send("EcoTrack API is running")
@@ -39,4 +41,3 @@ connectDB()
   .catch((err) => {
     console.error("Failed to connect to DB:", err)
   })
-

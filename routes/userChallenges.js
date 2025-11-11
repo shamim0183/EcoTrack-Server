@@ -3,18 +3,19 @@ const router = express.Router()
 const { ObjectId } = require("mongodb")
 const { getDB } = require("../db")
 
-// Join a challenge
+// POST: Join a challenge
 router.post("/join", async (req, res) => {
   const db = getDB()
-  const { userId, challengeId } = req.body
+  const { challengeId } = req.body
+  const userEmail = req.user.email
 
-  if (!userId || !challengeId) {
-    return res.status(400).json({ message: "Missing userId or challengeId" })
+  if (!userEmail || !challengeId) {
+    return res.status(400).json({ message: "Missing user or challengeId" })
   }
 
   try {
     const existing = await db.collection("userChallenges").findOne({
-      userId,
+      userId: userEmail,
       challengeId: new ObjectId(challengeId),
     })
 
@@ -23,7 +24,7 @@ router.post("/join", async (req, res) => {
     }
 
     const result = await db.collection("userChallenges").insertOne({
-      userId,
+      userId: userEmail,
       challengeId: new ObjectId(challengeId),
       status: "Not Started",
       progress: 0,
@@ -42,8 +43,17 @@ router.patch("/update/:id", async (req, res) => {
   const db = getDB()
   const challengeEntryId = req.params.id
   const { status, progress } = req.body
+  const userEmail = req.user.email
 
   try {
+    const entry = await db.collection("userChallenges").findOne({
+      _id: new ObjectId(challengeEntryId),
+    })
+
+    if (!entry || entry.userId !== userEmail) {
+      return res.status(403).json({ message: "Forbidden: Not your challenge" })
+    }
+
     const updateFields = {}
     if (status) updateFields.status = status
     if (typeof progress === "number") updateFields.progress = progress
@@ -57,10 +67,6 @@ router.patch("/update/:id", async (req, res) => {
         { returnDocument: "after" }
       )
 
-    if (!result.value) {
-      return res.status(404).json({ message: "UserChallenge entry not found" })
-    }
-
     res.json(result.value)
   } catch (err) {
     console.error("Progress update error:", err)
@@ -68,16 +74,16 @@ router.patch("/update/:id", async (req, res) => {
   }
 })
 
-// GET all joined challenges with progress for a user
-router.get("/:userId", async (req, res) => {
+// GET: All joined challenges for authenticated user
+router.get("/", async (req, res) => {
   const db = getDB()
-  const userId = req.params.userId
+  const userEmail = req.user.email
 
   try {
     const entries = await db
       .collection("userChallenges")
       .aggregate([
-        { $match: { userId } },
+        { $match: { userId: userEmail } },
         {
           $lookup: {
             from: "challenges",

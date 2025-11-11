@@ -5,17 +5,16 @@ const { getDB } = require("../db")
 
 router.get("/", async (req, res) => {
   const db = getDB()
-  const userEmail = req.query.userEmail
+  const userEmail = req.user?.email // ✅ Extract from Firebase token
 
   if (!userEmail) {
-    return res.status(400).json({ message: "Missing userEmail" })
+    return res.status(400).json({ message: "Missing userEmail from token" })
   }
 
   try {
     const userChallenges = await db
       .collection("userChallenges")
       .find({ userId: userEmail })
-      .sort({ joinDate: -1 })
       .toArray()
 
     const challengeIds = userChallenges.map(
@@ -43,7 +42,7 @@ router.get("/", async (req, res) => {
           challenge,
         }
       })
-      .filter(Boolean) // remove nulls
+      .filter(Boolean)
 
     const [tips, events] = await Promise.all([
       db
