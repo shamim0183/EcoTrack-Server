@@ -15,24 +15,35 @@ router.get("/", async (req, res) => {
     const userChallenges = await db
       .collection("userChallenges")
       .find({ userId: userEmail })
+      .sort({ joinDate: -1 })
       .toArray()
 
-    const challengeIds = userChallenges.map((uc) => uc.challengeId)
+    const challengeIds = userChallenges.map(
+      (uc) => new ObjectId(uc.challengeId)
+    )
 
     const challenges = await db
       .collection("challenges")
       .find({ _id: { $in: challengeIds } })
       .toArray()
 
-    const enrichedChallenges = userChallenges.map((uc) => {
-      const challenge = challenges.find(
-        (c) => c._id.toString() === uc.challengeId.toString()
-      )
-      return {
-        ...uc,
-        challenge,
-      }
-    })
+    const enrichedChallenges = userChallenges
+      .map((uc) => {
+        const challenge = challenges.find(
+          (c) => c._id.toString() === uc.challengeId.toString()
+        )
+        if (!challenge) return null
+
+        return {
+          userChallengeId: uc._id,
+          status: uc.status,
+          progress: uc.progress,
+          joinDate: uc.joinDate,
+          updatedAt: uc.updatedAt,
+          challenge,
+        }
+      })
+      .filter(Boolean) // remove nulls
 
     const [tips, events] = await Promise.all([
       db

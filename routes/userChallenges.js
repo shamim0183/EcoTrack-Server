@@ -37,4 +37,65 @@ router.post("/join", async (req, res) => {
   }
 })
 
+// PATCH: Update progress or status
+router.patch("/update/:id", async (req, res) => {
+  const db = getDB()
+  const challengeEntryId = req.params.id
+  const { status, progress } = req.body
+
+  try {
+    const updateFields = {}
+    if (status) updateFields.status = status
+    if (typeof progress === "number") updateFields.progress = progress
+    updateFields.updatedAt = new Date()
+
+    const result = await db
+      .collection("userChallenges")
+      .findOneAndUpdate(
+        { _id: new ObjectId(challengeEntryId) },
+        { $set: updateFields },
+        { returnDocument: "after" }
+      )
+
+    if (!result.value) {
+      return res.status(404).json({ message: "UserChallenge entry not found" })
+    }
+
+    res.json(result.value)
+  } catch (err) {
+    console.error("Progress update error:", err)
+    res.status(500).json({ message: "Failed to update progress" })
+  }
+})
+
+// GET all joined challenges with progress for a user
+router.get("/:userId", async (req, res) => {
+  const db = getDB()
+  const userId = req.params.userId
+
+  try {
+    const entries = await db
+      .collection("userChallenges")
+      .aggregate([
+        { $match: { userId } },
+        {
+          $lookup: {
+            from: "challenges",
+            localField: "challengeId",
+            foreignField: "_id",
+            as: "challenge",
+          },
+        },
+        { $unwind: "$challenge" },
+        { $sort: { joinDate: -1 } },
+      ])
+      .toArray()
+
+    res.json(entries)
+  } catch (err) {
+    console.error("Progress fetch error:", err)
+    res.status(500).json({ message: "Failed to fetch progress" })
+  }
+})
+
 module.exports = router
