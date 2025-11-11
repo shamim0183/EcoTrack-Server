@@ -6,10 +6,40 @@ const { getDB } = require("../db")
 // POST a new challenge
 router.post("/", async (req, res) => {
   const db = getDB()
-  const newChallenge = { ...req.body, createdAt: new Date() }
-  const result = await db.collection("challenges").insertOne(newChallenge)
-  res.status(201).json(result.ops?.[0] || newChallenge)
+  const {
+    title,
+    category,
+    description,
+    duration,
+    target,
+    impactMetric,
+    startDate,
+    endDate,
+    imageUrl,
+    createdBy,
+  } = req.body
+
+  try {
+    const result = await db.collection("challenges").insertOne({
+      title,
+      category,
+      description,
+      duration,
+      target,
+      impactMetric,
+      startDate,
+      endDate,
+      imageUrl,
+      createdBy,
+      participants: 0,
+    })
+    res.json({ message: "Challenge created", id: result.insertedId })
+  } catch (err) {
+    console.error("Challenge creation error:", err)
+    res.status(500).json({ error: "Failed to create challenge" })
+  }
 })
+
 
 // PATCH to join a challenge
 router.patch("/join/:id", async (req, res) => {
