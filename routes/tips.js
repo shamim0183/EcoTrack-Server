@@ -17,14 +17,26 @@ router.get("/", async (req, res) => {
 // POST a new tip
 router.post("/", async (req, res) => {
   const db = getDB()
-  const newTip = {
-    ...req.body,
-    createdAt: new Date(),
-    likes: [],
+  const { title, content, category, author, authorName, upvotes, createdAt } =
+    req.body
+
+  try {
+    const result = await db.collection("tips").insertOne({
+      title,
+      content,
+      category,
+      author,
+      authorName,
+      upvotes,
+      createdAt,
+    })
+    res.json({ message: "Tip created", id: result.insertedId })
+  } catch (err) {
+    console.error("Tip creation error:", err)
+    res.status(500).json({ error: "Failed to create tip" })
   }
-  const result = await db.collection("tips").insertOne(newTip)
-  res.status(201).json(result.ops?.[0] || newTip)
 })
+
 
 // PATCH to like a tip
 router.patch("/like/:id", async (req, res) => {
