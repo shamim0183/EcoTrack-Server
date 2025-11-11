@@ -17,14 +17,33 @@ router.get("/", async (req, res) => {
 // POST a new event
 router.post("/", async (req, res) => {
   const db = getDB()
-  const newEvent = {
-    ...req.body,
-    createdAt: new Date(),
-    attendees: [],
+  const {
+    title,
+    description,
+    date,
+    location,
+    organizer,
+    maxParticipants,
+    currentParticipants,
+  } = req.body
+
+  try {
+    const result = await db.collection("events").insertOne({
+      title,
+      description,
+      date,
+      location,
+      organizer,
+      maxParticipants,
+      currentParticipants,
+    })
+    res.json({ message: "Event created", id: result.insertedId })
+  } catch (err) {
+    console.error("Event creation error:", err)
+    res.status(500).json({ error: "Failed to create event" })
   }
-  const result = await db.collection("events").insertOne(newEvent)
-  res.status(201).json(result.ops?.[0] || newEvent)
 })
+
 
 // PATCH  to an event
 router.patch("/:id", async (req, res) => {
