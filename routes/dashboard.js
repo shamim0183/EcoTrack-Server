@@ -5,7 +5,7 @@ const { getDB } = require("../db")
 
 router.get("/", async (req, res) => {
   const db = getDB()
-  const userEmail = req.user?.email // ✅ Extract from Firebase token
+  const userEmail = req.user?.email 
 
   if (!userEmail) {
     return res.status(400).json({ message: "Missing userEmail from token" })

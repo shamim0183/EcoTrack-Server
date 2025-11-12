@@ -59,6 +59,10 @@ router.patch("/update/:id", async (req, res) => {
     return res.status(401).json({ message: "Unauthorized" })
   }
 
+  if (!ObjectId.isValid(challengeEntryId)) {
+    return res.status(400).json({ message: "Invalid entry ID" })
+  }
+
   try {
     const entry = await db.collection("userChallenges").findOne({
       _id: new ObjectId(challengeEntryId),
@@ -119,6 +123,39 @@ router.get("/", async (req, res) => {
   } catch (err) {
     console.error("Progress fetch error:", err)
     res.status(500).json({ message: "Failed to fetch joined challenges" })
+  }
+})
+
+// 🗑️ DELETE: Remove a joined challenge
+router.delete("/:id", async (req, res) => {
+  const db = getDB()
+  const entryId = req.params.id
+  const userEmail = req.user?.email
+
+  if (!userEmail) {
+    return res.status(401).json({ message: "Unauthorized" })
+  }
+
+  if (!ObjectId.isValid(entryId)) {
+    return res.status(400).json({ message: "Invalid entry ID" })
+  }
+
+  try {
+    const entry = await db.collection("userChallenges").findOne({
+      _id: new ObjectId(entryId),
+    })
+
+    if (!entry || entry.userId !== userEmail) {
+      return res.status(403).json({ message: "Forbidden: Not your entry" })
+    }
+
+    await db
+      .collection("userChallenges")
+      .deleteOne({ _id: new ObjectId(entryId) })
+    res.json({ message: "Challenge removed successfully" })
+  } catch (err) {
+    console.error("Delete error:", err)
+    res.status(500).json({ message: "Failed to remove challenge" })
   }
 })
 

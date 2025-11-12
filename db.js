@@ -14,7 +14,7 @@ let db
 async function connectDB() {
   try {
     // await client.connect()
-    db = client.db("ecotrack") // ✅ your database name
+    db = client.db("ecotrack") 
     console.log("✅ MongoDB connected")
   } catch (err) {
     console.error("❌ MongoDB error:", err)

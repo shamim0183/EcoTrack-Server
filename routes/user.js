@@ -26,7 +26,7 @@ router.post("/sync", async (req, res) => {
 })
 
 // GET user profile
-// 🔹 GET all joined challenges for a user
+//  GET all joined challenges for a user
 router.get("/user-challenges/:uid", async (req, res) => {
   const db = getDB()
   const uid = req.params.uid
@@ -58,7 +58,7 @@ router.get("/user-challenges/:uid", async (req, res) => {
   }
 })
 
-// 🔹 GET dashboard data for a user
+// GET dashboard data for a user
 router.get("/dashboard/:uid", async (req, res) => {
   const db = getDB()
   const uid = req.params.uid
