@@ -13,7 +13,7 @@ let db
 
 async function connectDB() {
   try {
-    await client.connect()
+    // await client.connect()
     db = client.db("ecotrack") 
     console.log("✅ MongoDB connected")
   } catch (err) {
