@@ -19,35 +19,63 @@ router.get("/challenges/featured", async (req, res) => {
 // Live Stats
 router.get("/stats", async (req, res) => {
   try {
-    const challenges = await getDB().collection("challenges").find().toArray()
+    const db = getDB()
+    const challenges = await db.collection("challenges").find().toArray()
 
-    const totalCO2 = challenges.reduce(
-      (sum, ch) =>
-        ch.impactMetric === "kg CO2 saved" ? sum + ch.participants * 10 : sum,
-      0
-    )
-    const totalPlastic = challenges.reduce(
-      (sum, ch) =>
-        ch.impactMetric === "kg plastic saved"
-          ? sum + ch.participants * 5
-          : sum,
-      0
-    )
-    const totalEnergy = challenges.reduce(
-      (sum, ch) =>
-        ch.impactMetric === "kWh saved" ? sum + ch.participants * 3 : sum,
-      0
-    )
+    console.log("📦 Total challenges received:", challenges.length)
 
-    res.json({
-      co2Saved: totalCO2,
-      plasticReduced: totalPlastic,
-      energySaved: totalEnergy,
+    let co2Saved = 40
+    let plasticReduced = 20
+    let energySaved = 30
+
+    challenges.forEach((ch, index) => {
+      try {
+        const raw = String(ch.impactMetric || "")
+          .toLowerCase()
+          .trim()
+        const value = parseFloat(raw.replace(/[^0-9.]/g, ""))
+        const unit = raw.replace(/[0-9.]/g, "").trim()
+        const participants = ch.participants || 0
+        const total = value * participants
+
+        console.log(`🔍 Challenge ${index + 1}:`, {
+          title: ch.title,
+          impactMetric: ch.impactMetric,
+          parsedValue: value,
+          unit,
+          participants,
+          totalImpact: total,
+        })
+
+        if (!isNaN(total)) {
+          if (unit.includes("l")) {
+            co2Saved += total
+          } else if (unit.includes("kg")) {
+            plasticReduced += total
+          } else if (unit.includes("kwh")) {
+            energySaved += total
+          }
+        }
+      } catch (err) {
+        console.error(`❌ Error parsing challenge ${index + 1}:`, err)
+      }
     })
+
+    const stats = {
+      co2Saved: Math.round(co2Saved), // in Liters
+      plasticReduced: Math.round(plasticReduced), // in Kilograms
+      energySaved: Math.round(energySaved), // in kWh
+    }
+
+    console.log("✅ Final aggregated stats:", stats)
+
+    res.json(stats)
   } catch (err) {
+    console.error("❌ Stats aggregation error:", err)
     res.status(500).json({ error: "Failed to calculate stats" })
   }
 })
+
 
 // Active Challenges
 router.get("/challenges/active", async (req, res) => {
