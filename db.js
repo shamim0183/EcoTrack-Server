@@ -1,7 +1,13 @@
 require("dotenv").config()
 const { MongoClient, ServerApiVersion } = require("mongodb")
 
-const client = new MongoClient(process.env.MONGO_URI, {
+const uri = process.env.MONGO_URI
+
+if (!uri) {
+  throw new Error("❌ MONGO_URI is not defined in environment variables")
+}
+
+const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
@@ -10,20 +16,33 @@ const client = new MongoClient(process.env.MONGO_URI, {
 })
 
 let db
+let clientPromise
 
+// For Vercel serverless - connect lazily
 async function connectDB() {
+  if (db) {
+    return db // Reuse existing connection
+  }
+
   try {
-    // await client.connect()
-    db = client.db("ecotrack") 
+    if (!clientPromise) {
+      clientPromise = client.connect()
+    }
+    await clientPromise
+    db = client.db("ecotrack")
     console.log("✅ MongoDB connected")
+    return db
   } catch (err) {
     console.error("❌ MongoDB error:", err)
     throw err
   }
 }
 
-function getDB() {
-  if (!db) throw new Error("❌ DB not initialized")
+// Get DB - connect if not already connected (for serverless)
+async function getDB() {
+  if (!db) {
+    await connectDB()
+  }
   return db
 }
 
