@@ -37,7 +37,6 @@ router.post("/", async (req, res) => {
   }
 })
 
-
 // PATCH to like a tip
 router.patch("/like/:id", async (req, res) => {
   const db = getDB()
@@ -65,6 +64,59 @@ router.patch("/like/:id", async (req, res) => {
   } catch (err) {
     console.error("Like error:", err)
     res.status(500).json({ message: "Failed to like tip" })
+  }
+})
+
+// Get single tip by ID
+router.get("/:id", async (req, res) => {
+  const db = getDB()
+  try {
+    const tip = await db
+      .collection("tips")
+      .findOne({ _id: new ObjectId(req.params.id) })
+    if (!tip) {
+      return res.status(404).json({ message: "Tip not found" })
+    }
+    res.json(tip)
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+})
+
+// Update tip
+router.patch("/:id", async (req, res) => {
+  const db = getDB()
+  try {
+    const { title, content, category } = req.body
+    const result = await db
+      .collection("tips")
+      .findOneAndUpdate(
+        { _id: new ObjectId(req.params.id) },
+        { $set: { title, content, category, updatedAt: new Date() } },
+        { returnDocument: "after" }
+      )
+    if (!result.value) {
+      return res.status(404).json({ message: "Tip not found" })
+    }
+    res.json(result.value)
+  } catch (error) {
+    res.status(400).json({ message: error.message })
+  }
+})
+
+// Delete tip
+router.delete("/:id", async (req, res) => {
+  const db = getDB()
+  try {
+    const result = await db
+      .collection("tips")
+      .deleteOne({ _id: new ObjectId(req.params.id) })
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: "Tip not found" })
+    }
+    res.json({ message: "Tip deleted successfully" })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
   }
 })
 

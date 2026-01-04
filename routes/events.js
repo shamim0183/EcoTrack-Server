@@ -44,34 +44,65 @@ router.post("/", async (req, res) => {
   }
 })
 
+// Get single event by ID
+router.get("/:id", async (req, res) => {
+  const db = getDB()
+  try {
+    const event = await db
+      .collection("events")
+      .findOne({ _id: new ObjectId(req.params.id) })
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" })
+    }
+    res.json(event)
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+})
 
-// PATCH  to an event
+// Update event
 router.patch("/:id", async (req, res) => {
   const db = getDB()
-  const eventId = req.params.id
-  const userEmail = req.body.userEmail
-
-  if (!userEmail) {
-    return res
-      .status(400)
-      .json({ message: "Missing userEmail in request body" })
-  }
-
   try {
-    const result = await db.collection("events").findOneAndUpdate(
-      { _id: new ObjectId(eventId) },
-      { $addToSet: { attendees: userEmail } }, // avoids duplicate RSVPs
-      { returnDocument: "after" }
-    )
-
+    const { title, description, date, location, maxParticipants } = req.body
+    const result = await db
+      .collection("events")
+      .findOneAndUpdate(
+        { _id: new ObjectId(req.params.id) },
+        {
+          $set: {
+            title,
+            description,
+            date,
+            location,
+            maxParticipants,
+            updatedAt: new Date(),
+          },
+        },
+        { returnDocument: "after" }
+      )
     if (!result.value) {
       return res.status(404).json({ message: "Event not found" })
     }
-
     res.json(result.value)
-  } catch (err) {
-    console.error("RSVP error:", err)
-    res.status(500).json({ message: "Failed to RSVP to event" })
+  } catch (error) {
+    res.status(400).json({ message: error.message })
+  }
+})
+
+// Delete event
+router.delete("/:id", async (req, res) => {
+  const db = getDB()
+  try {
+    const result = await db
+      .collection("events")
+      .deleteOne({ _id: new ObjectId(req.params.id) })
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: "Event not found" })
+    }
+    res.json({ message: "Event deleted successfully" })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
   }
 })
 
