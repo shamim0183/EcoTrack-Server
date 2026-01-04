@@ -58,16 +58,15 @@ app.get("/", (req, res) => {
 // For Vercel serverless - export the app
 module.exports = app
 
-// For local development
-if (process.env.NODE_ENV !== "production") {
-  const { connectDB } = require("./db")
-  connectDB()
-    .then(() => {
-      app.listen(port, () => {
-        console.log(`🚀 Server listening on port ${port}`)
-      })
+// Start server
+const { connectDB } = require("./db")
+connectDB()
+  .then(() => {
+    app.listen(port, () => {
+      console.log(`🚀 Server listening on port ${port}`)
     })
-    .catch((err) => {
-      console.error("❌ Failed to connect to DB:", err)
-    })
-}
+  })
+  .catch((err) => {
+    console.error("❌ Failed to connect to DB:", err)
+    process.exit(1)
+  })
