@@ -44,6 +44,35 @@ router.post("/", async (req, res) => {
   }
 })
 
+// Register for event (MUST come before /:id route!)
+router.post("/register", async (req, res) => {
+  const db = getDB()
+  const { eventId, userEmail } = req.body
+
+  if (!eventId || !userEmail) {
+    return res.status(400).json({ message: "Missing eventId or userEmail" })
+  }
+
+  try {
+    const result = await db
+      .collection("events")
+      .findOneAndUpdate(
+        { _id: new ObjectId(eventId) },
+        { $inc: { currentParticipants: 1 } },
+        { returnDocument: "after" }
+      )
+
+    if (!result.value) {
+      return res.status(404).json({ message: "Event not found" })
+    }
+
+    res.json({ message: "Registered successfully", event: result.value })
+  } catch (error) {
+    console.error("Event registration error:", error)
+    res.status(500).json({ message: "Failed to register for event" })
+  }
+})
+
 // Get single event by ID
 router.get("/:id", async (req, res) => {
   const db = getDB()
@@ -85,35 +114,6 @@ router.patch("/:id", async (req, res) => {
     res.json(result.value)
   } catch (error) {
     res.status(400).json({ message: error.message })
-  }
-})
-
-// Register for event
-router.post("/register", async (req, res) => {
-  const db = getDB()
-  const { eventId, userEmail } = req.body
-
-  if (!eventId || !userEmail) {
-    return res.status(400).json({ message: "Missing eventId or userEmail" })
-  }
-
-  try {
-    const result = await db
-      .collection("events")
-      .findOneAndUpdate(
-        { _id: new ObjectId(eventId) },
-        { $inc: { currentParticipants: 1 } },
-        { returnDocument: "after" }
-      )
-
-    if (!result.value) {
-      return res.status(404).json({ message: "Event not found" })
-    }
-
-    res.json({ message: "Registered successfully", event: result.value })
-  } catch (error) {
-    console.error("Event registration error:", error)
-    res.status(500).json({ message: "Failed to register for event" })
   }
 })
 
