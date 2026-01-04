@@ -95,10 +95,10 @@ router.patch("/:id", async (req, res) => {
         { $set: { title, content, category, updatedAt: new Date() } },
         { returnDocument: "after" }
       )
-    if (!result.value) {
+    if (!result) {
       return res.status(404).json({ message: "Tip not found" })
     }
-    res.json(result.value)
+    res.json(result)
   } catch (error) {
     res.status(400).json({ message: error.message })
   }
