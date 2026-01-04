@@ -1,8 +1,8 @@
 const express = require("express")
 const router = express.Router()
 const { ObjectId } = require("mongodb")
-const { getDB } = require("../db");
-const { verifyFirebaseToken } = require("../firebaseAuth");
+const { getDB } = require("../db")
+const { verifyFirebaseToken } = require("../firebaseAuth")
 
 // 🔹 POST: Create a new challenge (protected)
 router.post("/", verifyFirebaseToken, async (req, res) => {
@@ -249,12 +249,17 @@ router.patch("/join/:id", async (req, res) => {
 
 router.get("/", async (req, res) => {
   const db = getDB()
+  const { limit } = req.query
+
   try {
-    const challenges = await db
-      .collection("challenges")
-      .find({})
-      .sort({ createdAt: -1 })
-      .toArray()
+    let query = db.collection("challenges").find({}).sort({ createdAt: -1 })
+
+    // Apply limit if provided
+    if (limit) {
+      query = query.limit(parseInt(limit))
+    }
+
+    const challenges = await query.toArray()
     res.json(challenges)
   } catch (err) {
     console.error("Fetch challenges error:", err)

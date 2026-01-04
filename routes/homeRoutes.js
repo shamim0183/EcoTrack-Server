@@ -76,7 +76,6 @@ router.get("/stats", async (req, res) => {
   }
 })
 
-
 // Active Challenges
 router.get("/challenges/active", async (req, res) => {
   try {
@@ -106,6 +105,7 @@ router.get("/tips/recent", async (req, res) => {
       .toArray()
     res.json(tips)
   } catch (err) {
+    console.error("❌ Tips/recent error:", err)
     res.status(500).json({ error: "Failed to fetch recent tips" })
   }
 })
