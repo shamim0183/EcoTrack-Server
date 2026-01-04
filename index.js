@@ -7,7 +7,28 @@ const { verifyFirebaseToken } = require("./firebaseAuth")
 const app = express()
 const port = process.env.PORT || 3000
 
-app.use(cors())
+// CORS Configuration - Allow both local and production
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  process.env.CORS_ORIGIN, // Add your Netlify URL in Vercel env vars
+].filter(Boolean) // Remove undefined values
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin (mobile apps, Postman, etc.)
+      if (!origin) return callback(null, true)
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true)
+      } else {
+        callback(new Error("Not allowed by CORS"))
+      }
+    },
+    credentials: true,
+  })
+)
 app.use(express.json())
 
 // Routes
